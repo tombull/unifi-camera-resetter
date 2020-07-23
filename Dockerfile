@@ -1,8 +1,8 @@
 FROM node:lts-stretch AS builder
 WORKDIR /app
-COPY website/package*.json ./
+COPY package*.json ./
 RUN npm ci
-COPY website/. .
+COPY . .
 RUN npx next telemetry disable
 RUN npm run export
 
