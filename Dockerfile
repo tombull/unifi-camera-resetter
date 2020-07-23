@@ -1,10 +1,11 @@
 FROM node:lts-stretch AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+COPY yarn.lock ./
+RUN yarn install --frozen-lockfile
 COPY . .
-RUN npx next telemetry disable
-RUN npm run export
+RUN yarn next telemetry disable
+RUN yarn export
 
 FROM fholzer/nginx-brotli:latest
 RUN rm -rf /usr/share/nginx/html
