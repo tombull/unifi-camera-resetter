@@ -12,21 +12,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Set repository name environment variable
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//")
+        shell: bash
       - name: Build and upload the website docker image
         env:
-          CONTAINER_URL: docker.pkg.github.com/${{github.repository}}/${{github.repository}}
+          CONTAINER_URL: docker.pkg.github.com/${{github.repository}}/
         run: |
           echo ${{secrets.GITHUB_TOKEN}} | docker login --username $GITHUB_ACTOR --password-stdin docker.pkg.github.com
           export SHORT_SHA=`git rev-parse --short=7 ${GITHUB_SHA}`
-          docker build . --file Dockerfile --build-arg BUILD_VERSION=${SHORT_SHA} --tag ${CONTAINER_URL}:${SHORT_SHA} --tag ${CONTAINER_URL}:latest
-          docker push ${CONTAINER_URL}:${SHORT_SHA}
-          docker push ${CONTAINER_URL}:latest
+          docker build . --file Dockerfile --build-arg BUILD_VERSION=${SHORT_SHA} --tag ${CONTAINER_URL}${REPOSITORY_NAME}:${SHORT_SHA} --tag ${CONTAINER_URL}${REPOSITORY_NAME}:latest
+          docker push ${CONTAINER_URL}${REPOSITORY_NAME}:${SHORT_SHA}
+          docker push ${CONTAINER_URL}${REPOSITORY_NAME}:latest
       - name: Trigger deployment webhook
         env:
-          CONTAINER_URL: docker.pkg.github.com/${{github.repository}}/${{github.repository}}
+          CONTAINER_URL: docker.pkg.github.com/${{github.repository}}/
         run: |
           export SHORT_SHA=`git rev-parse --short=7 ${GITHUB_SHA}`
-          curl -X POST -H "Content-Type: application/json" --data "{ \"name\": \"${CONTAINER_URL}\", \"tag\": \"${SHORT_SHA}\" }" https://keel.iteralis.com/v1/webhooks/native
+          curl -X POST -H "Content-Type: application/json" --data "{ \"name\": \"${CONTAINER_URL}${REPOSITORY_NAME}\", \"tag\": \"${SHORT_SHA}\" }" https://keel.iteralis.com/v1/webhooks/native
       - name: Immediately purge CloudFlare cache
         run: |
           curl -X POST "https://api.cloudflare.com/client/v4/zones/f0d1494c3461ef07e5876c87454b5427/purge_cache" -H "Authorization: Bearer ${{secrets.CLOUDFLARE_API_TOKEN}}" -H "Content-Type: application/json" --data '{"purge_everything":true}'
