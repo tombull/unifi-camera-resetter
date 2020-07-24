@@ -1,0 +1,265 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500&display=swap");
+
+$font-family-sans-serif: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+  "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+
+$green: #7cae7a;
+$red: #690500;
+$dark: #394053;
+$light: #dbe4ee;
+$font-size-base: 1rem;
+
+@import "./icofont.css";
+
+$rt-namespace: "Toastify";
+$rt-toast-width: 18rem;
+
+$rt-toast-background: $dark;
+$rt-toast-min-height: 4rem;
+$rt-toast-max-height: 12rem;
+
+$rt-color-default: darken($dark, 12%);
+$rt-color-dark: darken($dark, 12%);
+$rt-color-info: #3498db !default;
+$rt-color-success: #07bc0c !default;
+$rt-color-warning: #f1c40f !default;
+$rt-color-error: #e74c3c !default;
+
+$rt-text-color-default: $light;
+$rt-text-color-dark: $light;
+
+$rt-color-progress-default: $green;
+$rt-color-progress-dark: $green;
+$rt-mobile: "only screen and (max-width : 480px)" !default;
+$rt-font-family: $font-family-sans-serif;
+$rt-z-index: 9999 !default;
+
+@import "../../node_modules/react-toastify/scss/main";
+
+body {
+  background-color: $dark;
+  font-family: $font-family-sans-serif;
+  font-weight: 300;
+}
+
+#outer {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  margin: 1rem;
+}
+
+.camera {
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    padding-bottom: 56.25%;
+  }
+  background-color: darken($dark, 12%);
+  border-radius: 0.5rem;
+  line-height: 0;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  img {
+    vertical-align: top;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    filter: brightness(70%);
+    transition: all 0.3s ease-in-out;
+  }
+  .camera-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin-right: 0.5rem;
+    line-height: 1.6;
+    color: $light;
+    font-size: $font-size-base * 1.3;
+  }
+  .camera-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20rem;
+    margin-left: -10rem;
+    margin-top: -4rem;
+    text-align: center;
+    z-index: 1020;
+    i {
+      font-size: 8rem;
+      transition: all 0.3s ease-in-out;
+    }
+    i.icofont-power {
+      opacity: 100%;
+      color: $green;
+    }
+    i.icofont-ui-reply {
+      color: $red;
+      opacity: 0%;
+    }
+    i.icofont-exclamation-circle {
+      color: $red;
+    }
+    .spinner {
+      margin: 0;
+      display: inline-block;
+      width: 8rem;
+      height: 8rem;
+      vertical-align: text-bottom;
+      background-color: $light;
+      border-radius: 50%;
+      opacity: 0;
+      animation: spinner-grow 0.75s linear infinite;
+    }
+  }
+  &:hover {
+    i.icofont-power {
+      opacity: 0%;
+    }
+    i.icofont-ui-reply {
+      opacity: 100%;
+    }
+    img {
+      filter: brightness(90%);
+    }
+    background-color: darken($dark, 4%);
+    transform: translate(-0.25rem, -0.25rem);
+    box-shadow: 0.25rem 0.25rem 0.25rem 0 rgba(0, 0, 0, 0.5);
+  }
+}
+
+#error {
+  width: 20rem;
+  margin: auto;
+  margin-top: 3rem;
+  background-color: darken($dark, 12%);
+  color: $light;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  i {
+    font-size: 4rem;
+  }
+
+  hr {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: 0;
+    border-top: 1px solid lighten($dark, 10%);
+  }
+  h4 {
+    font-weight: 500;
+  }
+  a {
+    color: $light;
+    font-weight: 400;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+#loading {
+  width: 20rem;
+  margin: auto;
+  margin-top: 3rem;
+  background-color: darken($dark, 12%);
+  color: $light;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  .spinner {
+    margin: 1rem;
+    display: inline-block;
+    width: 4rem;
+    height: 4rem;
+    vertical-align: text-bottom;
+    background-color: $light;
+    border-radius: 50%;
+    opacity: 0;
+    animation: spinner-grow 0.75s linear infinite;
+  }
+  hr {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: 0;
+    border-top: 1px solid lighten($dark, 10%);
+  }
+  h4 {
+    font-weight: 500;
+  }
+  a {
+    color: $light;
+    font-weight: 400;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@keyframes spinner-grow {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.checkmark__circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 0.5rem;
+  stroke-miterlimit: 10;
+  stroke: $green;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 0.5rem;
+  stroke: $light;
+  stroke-miterlimit: 10;
+  margin: auto;
+  box-shadow: inset 0px 0px 0px #7ac142;
+  animation: fill 0.4s ease-in-out 0.4s forwards,
+    scale 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark__check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes scale {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale3d(1.1, 1.1, 1);
+  }
+}
+@keyframes fill {
+  100% {
+    box-shadow: inset 0px 0px 0px 4rem $green;
+  }
+}

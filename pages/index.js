@@ -1,209 +1,239 @@
-import Head from 'next/head'
+import Head from "next/head";
+import useSWR, { mutate } from "swr";
+import { ToastContainer, toast } from "react-toastify";
 
-export default function Home() {
+const unifiVideoUrl = "https://cctv.ministryofstartups.co.uk/";
+const macResetUrl = "https://unifimacreset.mos.iteralis.com/reset/";
+
+let resetting = [];
+let justReset = [];
+let justErrored = [];
+
+const getData = async () => {
+  let response;
+  response = await fetch(`${unifiVideoUrl}api/2.0/camera`, {
+    credentials: "include",
+  });
+  if (response.ok) {
+    let responseJson = await response.json();
+    let camerasWithResetting = responseJson.data
+      ? responseJson.data.map((cam) =>
+          resetting.includes(cam.mac) ? { ...cam, resetting: true } : cam
+        )
+      : [];
+    let camerasWithJustReset = camerasWithResetting.map((cam) =>
+      justReset.includes(cam.mac) ? { ...cam, justReset: true } : cam
+    );
+    return camerasWithJustReset.map((cam) =>
+      justErrored.includes(cam.mac) ? { ...cam, justErrored: true } : cam
+    );
+  } else {
+    throw new Error(response.status);
+  }
+};
+
+const useCameras = () => {
+  const { data, error } = useSWR("cameras", getData, {
+    refreshInterval: 700,
+  });
+  return {
+    cameras: data,
+    isLoading: !error && !data,
+    isError: error,
+    random: Math.floor(Math.random() * 1000000 + 1),
+  };
+};
+
+const clickCamera = async (cameraMac, e, cameraName) => {
+  e.preventDefault();
+  if (!resetting.includes(cameraMac) && !justReset.includes(cameraMac)) {
+    resetting.push(cameraMac);
+    mutate("cameras", (cameras) => {
+      return cameras.map((cam) =>
+        cam.mac === cameraMac ? { ...cam, resetting: true } : cam
+      );
+    });
+    let cameraMacWithColons = cameraMac
+      .replace(/(\w{2})/gi, "$1:")
+      .replace(/:$/, "");
+    let response = false;
+    let error = false;
+    try {
+      response = await fetch(`${macResetUrl}${cameraMacWithColons}`);
+    } catch (err) {
+      error = err.toString();
+    }
+    resetting = resetting.filter((a) => a != cameraMac);
+    if (response && response.ok) {
+      let responseJson = await response.json();
+      if (responseJson && responseJson.success) {
+        justReset.push(cameraMac);
+        window.setTimeout(() => {
+          justReset = justReset.filter((a) => a != cameraMac);
+        }, 1500);
+        mutate("cameras", (cameras) => {
+          return cameras.map((cam) =>
+            cam.mac === cameraMac ? { ...cam, justReset: true } : cam
+          );
+        });
+      } else if (!responseJson) {
+        error = "Could not understand response from server.";
+      } else {
+        error = responseJson.message;
+      }
+      toast(`Successfully reset power to: ${cameraName}.`);
+    } else if (response) {
+      error = response.statusText;
+    }
+    if (error) {
+      justErrored.push(cameraMac);
+      window.setTimeout(() => {
+        justErrored = justErrored.filter((a) => a != cameraMac);
+      }, 2000);
+      mutate("cameras", (cameras) => {
+        return cameras.map((cam) =>
+          cam.mac === cameraMac ? { ...cam, justErrored: true } : cam
+        );
+      });
+      toast(`Error resetting power to: ${cameraName}: ${error}.`);
+    }
+  }
+};
+
+const Home = () => {
+  const { cameras, isLoading, isError } = useCameras();
   return (
-    <div className="container">
+    <>
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>Camera Resetter</title>
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#7cae7a" />
+        <meta name="apple-mobile-web-app-title" content="Camera Resetter" />
+        <meta name="application-name" content="Camera Resetter" />
+        <meta name="msapplication-TileColor" content="#dbe4ee" />
+        <meta name="theme-color" content="#394053" />
       </Head>
-
-      <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
-
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+      <ToastContainer />
+      {isLoading && (
+        <div id="loading">
+          <div className="spinner"></div>
+          <h4>Loading cameras...</h4>
         </div>
-      </main>
+      )}
+      {isError && (
+        <div id="error">
+          <p>
+            <i className="icofont-exclamation-circle" />
+          </p>
 
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
-      </footer>
+          <h4>Can't get list of cameras. </h4>
+          <hr />
+          <p>
+            Are you logged in to{" "}
+            <a href={unifiVideoUrl} target="_blank">
+              the cctv system
+            </a>
+            ?
+          </p>
+        </div>
+      )}
 
-      <style jsx>{`
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
+      {!isError && cameras && (
+        <div id="outer">
+          {[...cameras]
+            .sort((a, b) => (a.name > b.name ? 1 : -1))
+            .filter((a) => a.managed)
+            .map((camera) => (
+              <div
+                className="camera"
+                key={camera._id}
+                onClick={async (e) => clickCamera(camera.mac, e, camera.name)}
+              >
+                <img
+                  onError={(e) => {
+                    e.target.style = "display: none;";
+                  }}
+                  onLoad={(e) => {
+                    e.target.style = "display: inline;";
+                  }}
+                  src={`${unifiVideoUrl}api/2.0/snapshot/camera/${
+                    camera._id
+                  }?width=800&force=true&no_ref=${Math.floor(
+                    Math.random() * 1000000 + 1
+                  )}`}
+                />
+                {(!("resetting" in camera) || !camera.resetting) &&
+                  (!("justReset" in camera) || !camera.justReset) &&
+                  (!("justErrored" in camera) || !camera.justErrored) && (
+                    <>
+                      <div className="camera-icon">
+                        {camera.state.toLowerCase() != "connected" && (
+                          <i className="icofont-power" />
+                        )}
+                      </div>
+                      <div className="camera-icon">
+                        <i className="icofont-ui-reply" />
+                      </div>
+                    </>
+                  )}
+                {"justErrored" in camera && camera.justErrored && (
+                  <div className="camera-icon">
+                    <i className="icofont-exclamation-circle" />
+                  </div>
+                )}
+                {"justReset" in camera && camera.justReset && (
+                  <div className="camera-icon">
+                    <svg
+                      className="checkmark"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 52 52"
+                    >
+                      <circle
+                        className="checkmark__circle"
+                        cx="26"
+                        cy="26"
+                        r="25"
+                        fill="none"
+                      />
+                      <path
+                        className="checkmark__check"
+                        fill="none"
+                        d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                      />
+                    </svg>
+                  </div>
+                )}
+                {"resetting" in camera && camera.resetting && (
+                  <div className="camera-icon">
+                    <div className="spinner"></div>
+                  </div>
+                )}
+                <div className="camera-overlay">
+                  <div>{camera.name}</div>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </>
+  );
+};
 
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer img {
-          margin-left: 0.5rem;
-        }
-
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
-        }
-
-        .title {
-          margin: 0;
-          line-height: 1.15;
-          font-size: 4rem;
-        }
-
-        .title,
-        .description {
-          text-align: center;
-        }
-
-        .description {
-          line-height: 1.5;
-          font-size: 1.5rem;
-        }
-
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
-        .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-          border: 1px solid #eaeaea;
-          border-radius: 10px;
-          transition: color 0.15s ease, border-color 0.15s ease;
-        }
-
-        .card:hover,
-        .card:focus,
-        .card:active {
-          color: #0070f3;
-          border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
-        }
-
-        .logo {
-          height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
-    </div>
-  )
-}
+export default Home;

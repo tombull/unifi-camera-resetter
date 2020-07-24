@@ -10,7 +10,12 @@
   },
   "dependencies": {
     "next": "9.4.4",
+    "node-sass": "^4.14.1",
     "react": "16.13.1",
-    "react-dom": "16.13.1"
+    "react-dom": "16.13.1",
+    "react-toastify": "^6.0.8",
+    "sass": "^1.26.10",
+    "styled-jsx-plugin-sass": "^1.0.0",
+    "swr": "^0.2.3"
   }
 }
