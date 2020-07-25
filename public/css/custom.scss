@@ -95,12 +95,12 @@ body {
       transition: all 0.3s ease-in-out;
     }
     i.icofont-power {
-      opacity: 100%;
+      opacity: 1;
       color: $green;
     }
     i.icofont-ui-reply {
       color: $red;
-      opacity: 0%;
+      opacity: 0;
     }
     i.icofont-exclamation-circle {
       color: $red;
@@ -119,10 +119,10 @@ body {
   }
   &:hover {
     i.icofont-power {
-      opacity: 0%;
+      opacity: 0;
     }
     i.icofont-ui-reply {
-      opacity: 100%;
+      opacity: 1;
     }
     img {
       filter: brightness(90%);
