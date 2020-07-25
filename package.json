@@ -1,6 +1,13 @@
 {
   "name": "unifi-camera-resetter",
   "version": "0.1.0",
+  "homepage": "https://github.com/tombull/unifi-camera-resetter",
+  "bugs": "https://github.com/tombull/unifi-camera-resetter/issues",
+  "license": "Unlicense",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tombull/unifi-camera-resetter.git"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
