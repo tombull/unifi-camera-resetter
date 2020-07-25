@@ -83,7 +83,12 @@ const clickCamera = async (cameraMac, e, cameraName) => {
       }
       toast(`Successfully reset power to: ${cameraName}.`);
     } else if (response) {
-      error = response.statusText;
+      let responseJson = await response.json();
+      if (responseJson) {
+        error = responseJson.message;
+      } else {
+        error = `Could not understand response from server (${response.status}: ${response.statusText})`;
+      }
     }
     if (error) {
       justErrored.push(cameraMac);
